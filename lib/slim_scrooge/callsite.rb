@@ -42,6 +42,7 @@ module SlimScrooge
 
     def initialize(model_class)
       @all_columns = SimpleSet.new(model_class.column_names)
+      @model_class = model_class
       @model_class_name = model_class.to_s
       @quoted_table_name = model_class.quoted_table_name
       @primary_key = model_class.primary_key
@@ -90,9 +91,7 @@ module SlimScrooge
     # in the result set, specified by primary_keys
     #
     def reload_sql(primary_keys, fetched_columns)
-      sql_keys = primary_keys.collect{|pk| "#{connection.quote_column_name(pk)}"}.join(ScroogeComma)
-      cols = scrooge_select_sql(missing_columns(fetched_columns))
-      "SELECT #{cols} FROM #{@quoted_table_name} WHERE #{@quoted_primary_key} IN (#{sql_keys})"
+      @model_class.select(missing_columns(fetched_columns).keys.collect(&:to_sym)).where(["#{@quoted_primary_key} in (?)", primary_keys]).to_sql
     end
 
     def connection
