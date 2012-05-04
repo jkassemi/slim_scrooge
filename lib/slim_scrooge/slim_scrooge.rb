@@ -15,16 +15,11 @@ module SlimScrooge
         callsite_key = SlimScrooge::Callsites.callsite_key(query.froms.map(&:name).join)
         sql = connection.to_sql(sanitize_sql(query), binds)
         
-        puts ">> callsite key #{callsite_key}"
-
         if SlimScrooge::Callsites.has_key?(callsite_key)
-          puts ">> find with callsite key"
           find_with_callsite_key(sql, callsite_key)
         elsif callsite = SlimScrooge::Callsites.create(sql, callsite_key, name)  # new site that is scroogeable
-          puts ">> find with new callsite key"
           rows = connection.select_all(sql, "#{name} Load", binds).collect! { |record| instantiate(MonitoredHash[record, {}, callsite]) }
         else
-          puts ">> find without callsite key"
           find_without_callsite_key(query, binds)
         end
       end
