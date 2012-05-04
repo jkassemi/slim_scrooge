@@ -9,6 +9,16 @@ module SlimScrooge
     ScroogeCallsiteSample = 1..16
 
     class << self
+      def reset
+        CallsitesMutex.synchronize do
+          @@callsites = {}
+        end
+      end
+
+      def count
+        @@callsites.length
+      end
+
       # Whether we have encountered a callsite before
       #
       def has_key?(callsite_key)

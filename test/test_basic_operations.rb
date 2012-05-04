@@ -2,8 +2,15 @@ require 'test/unit'
 require File.join(File.dirname(__FILE__), '../test/helper')
 require File.join(File.dirname(__FILE__), '../test/models/course')
 
+module SlimScrooge
+  class Callsites
+    ScroogeCallsiteSample = 1..2
+  end
+end
+
 class TestBasicOperations < Test::Unit::TestCase
   def setup
+    SlimScrooge::Callsites.reset
     SlimScrooge::Test.setup
 
     c = nil
@@ -16,37 +23,44 @@ class TestBasicOperations < Test::Unit::TestCase
   end
 
   def test_all
-    Course.all.to_a
+    assert Course.all.to_a.length == 5
   end
 
   def test_one
-    puts @id
-    puts Course.all.inspect
-
-    assert !Course.find(@id.to_s).nil?
+    assert !Course.find(@id).nil?
   end
 
   def test_first
-    Course.first
+    assert !Course.first.nil?
   end
   
   def test_where
     courses = Course.where(["id > 0", @id])
     assert courses.count == 5
   end
-  
+ 
   def test_destroy
-    Course.first.destroy
+    Course.find(@id).destroy
+    assert Course.where(:id => @id).count == 0 
   end
 
   def test_monitoring
     courses = load_all
     names = courses.all.collect(&:name)
 
-    courses = load_all.all
+    assert callsites_count == 1
+
+    courses = load_all
+    ids = courses.all.collect(&:unused)
+
+    assert callsites_count == 1
   end
 
   private
+  def callsites_count
+    SlimScrooge::Callsites.count
+  end
+
   def load_all
     Course.where(true)
   end

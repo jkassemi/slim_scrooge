@@ -11,27 +11,21 @@ module SlimScrooge
     end
 
     module ClassMethods
-      def find_by_sql_with_slim_scrooge(sql, binds = [])
-        #return find_by_sql_with_or_without_arel(sql, binds) if sql.is_a?(Array) # don't mess with user's custom query
+      def find_by_sql_with_slim_scrooge(query, binds)
+        callsite_key = SlimScrooge::Callsites.callsite_key(query.froms.map(&:name).join)
+        sql = connection.to_sql(sanitize_sql(query), binds)
+        
+        puts ">> callsite key #{callsite_key}"
 
-        if @@slim_use_arel
-          callsite_key = SlimScrooge::Callsites.callsite_key(sql.froms.map(&:name).join)
-          model_class = name.split.first.constantize
-
-          binding.pry if binds.length > 0
-
-          sql = model_class.connection.to_sql(sql, binds)
-        else
-          callsite_key = SlimScrooge::Callsites.callsite_key(sql)
-        end
-      
         if SlimScrooge::Callsites.has_key?(callsite_key)
+          puts ">> find with callsite key"
           find_with_callsite_key(sql, callsite_key)
         elsif callsite = SlimScrooge::Callsites.create(sql, callsite_key, name)  # new site that is scroogeable
-          rows = connection.select_all(sql, "#{name} Load SlimScrooged 1st time")
-          rows.collect! {|row| instantiate(MonitoredHash[row, {}, callsite])}
+          puts ">> find with new callsite key"
+          rows = connection.select_all(sql, "#{name} Load", binds).collect! { |record| instantiate(MonitoredHash[record, {}, callsite]) }
         else
-          find_by_sql_without_slim_scrooge(sql, binds)
+          puts ">> find without callsite key"
+          find_without_callsite_key(query, binds)
         end
       end
 
