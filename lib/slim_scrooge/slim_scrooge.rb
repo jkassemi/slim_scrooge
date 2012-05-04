@@ -20,7 +20,7 @@ module SlimScrooge
         elsif callsite = SlimScrooge::Callsites.create(sql, callsite_key, name)  # new site that is scroogeable
           rows = connection.select_all(sql, "#{name} Load", binds).collect! { |record| instantiate(MonitoredHash[record, {}, callsite]) }
         else
-          find_without_callsite_key(query, binds)
+          find_by_sql_without_slim_scrooge(query, binds)
         end
       end
 
