@@ -4,7 +4,7 @@ module SlimScrooge
   module FindBySql
     def self.included(base)
       ActiveRecord::Base.extend ClassMethods
-      ClassMethods.class_variable_set(:@@slim_use_arel, (base.method(:find_by_sql).arity != 1))
+
       class << base
         alias_method_chain :find_by_sql, :slim_scrooge
       end
